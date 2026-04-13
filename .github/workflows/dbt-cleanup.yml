@@ -1,0 +1,62 @@
+name: dbt CI Schema Cleanup
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - closed
+
+jobs:
+  cleanup:
+    name: Drop CI schema for PR ${{ github.event.pull_request.number }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    env:
+      SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+      SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
+      SNOWFLAKE_DATABASE: ${{ secrets.SNOWFLAKE_DATABASE }}
+      SNOWFLAKE_ROLE: ${{ secrets.SNOWFLAKE_ROLE }}
+      SNOWFLAKE_PRIVATE_KEY_PASSPHRASE: ${{ secrets.SNOWFLAKE_PRIVATE_KEY_PASSPHRASE }}
+      SNOWFLAKE_PRIVATE_KEY_PATH: /tmp/snowflake_key.p8
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+
+    steps:
+      - name: Write Snowflake private key
+        run: |
+          echo "${{ secrets.SNOWFLAKE_PRIVATE_KEY }}" > /tmp/snowflake_key.p8
+          chmod 600 /tmp/snowflake_key.p8
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Snowflake connector
+        run: pip install snowflake-connector-python
+
+      - name: Drop CI schema
+        run: |
+          python - <<'EOF'
+          import snowflake.connector
+          import os
+
+          pr = os.environ["PR_NUMBER"]
+          database = os.environ["SNOWFLAKE_DATABASE"]
+          schema = f"dbt_pr_{pr}"
+
+          conn = snowflake.connector.connect(
+              account=os.environ["SNOWFLAKE_ACCOUNT"],
+              user=os.environ["SNOWFLAKE_USER"],
+              private_key_file=os.environ["SNOWFLAKE_PRIVATE_KEY_PATH"],
+              private_key_file_pwd=os.environ.get("SNOWFLAKE_PRIVATE_KEY_PASSPHRASE") or None,
+              role=os.environ.get("SNOWFLAKE_ROLE") or None,
+          )
+
+          cur = conn.cursor()
+          fqn = f"{database}.{schema}"
+          cur.execute(f"DROP SCHEMA IF EXISTS {fqn}")
+          print(f"Dropped schema: {fqn}")
+          conn.close()
+          EOF

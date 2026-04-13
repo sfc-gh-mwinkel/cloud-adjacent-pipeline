@@ -1,0 +1,61 @@
+version: 2
+
+sources:
+  - name: cloud_adjacent_pipeline
+    description: Raw seed data loaded via dbt seeds
+    schema: "{{ target.schema }}"
+    tables:
+      - name: raw_events
+        description: Raw event records (purchases, refunds) used as the source for all downstream models
+        columns:
+          - name: id
+            description: Unique event identifier
+            tests:
+              - unique
+              - not_null
+          - name: event_type
+            description: Type of event
+            tests:
+              - not_null
+              - accepted_values:
+                  values: ['purchase', 'refund']
+          - name: user_id
+            tests:
+              - not_null
+          - name: amount
+            tests:
+              - not_null
+          - name: status
+            tests:
+              - accepted_values:
+                  values: ['completed', 'pending', 'failed']
+          - name: updated_at
+            tests:
+              - not_null
+
+models:
+  - name: stg_events
+    description: Staged and typed events from the raw_events source
+    columns:
+      - name: event_id
+        description: Unique event identifier
+        tests:
+          - unique
+          - not_null
+      - name: event_type
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['purchase', 'refund']
+      - name: user_id
+        tests:
+          - not_null
+      - name: amount
+        tests:
+          - not_null
+      - name: status
+        tests:
+          - not_null
+      - name: updated_at
+        tests:
+          - not_null

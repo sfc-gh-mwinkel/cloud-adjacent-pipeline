@@ -1,0 +1,31 @@
+version: 2
+
+models:
+  - name: int_user_event_summary
+    description: Ephemeral aggregation of events per user, computing purchase/refund counts and revenue totals.
+    columns:
+      - name: user_id
+        description: User identifier
+        tests:
+          - unique
+          - not_null
+      - name: purchase_count
+        description: Total number of purchase events for the user
+        tests:
+          - not_null
+      - name: refund_count
+        description: Total number of refund events for the user
+        tests:
+          - not_null
+      - name: gross_revenue
+        description: Sum of all purchase amounts for the user
+        tests:
+          - not_null
+      - name: total_refunds
+        description: Sum of all refund amounts for the user
+        tests:
+          - not_null
+      - name: last_event_at
+        description: Timestamp of the most recent event for the user
+        tests:
+          - not_null

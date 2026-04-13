@@ -1,0 +1,44 @@
+name: 'cloud_adjacent_pipeline'
+version: '1.0.0'
+config-version: 2
+
+profile: 'default'
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+on-run-start:
+  - "{{ clone_incrementals_for_ci() }}"
+
+vars:
+  ci_target_names: ['ci', 'pr', 'slim_ci', 'check']
+  ci_truncate_days: 1
+  ci_timestamp_column: 'updated_at'
+  ci_clone_enabled: true
+
+models:
+  cloud_adjacent_pipeline:
+    +query_tag: 'dbt'
+
+    staging:
+      +materialized: view
+      +tags: ["staging"]
+      +query_tag: 'dbt_staging'
+
+    intermediate:
+      +materialized: ephemeral
+      +tags: ["intermediate"]
+
+    marts:
+      +materialized: table
+      +tags: ["marts"]
+      +query_tag: 'dbt_marts'

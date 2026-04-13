@@ -1,0 +1,29 @@
+default:
+  target: check
+  outputs:
+
+    check:
+      type: snowflake
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
+      user: "{{ env_var('SNOWFLAKE_USER') }}"
+      private_key_path: "{{ env_var('SNOWFLAKE_PRIVATE_KEY_PATH') }}"
+      private_key_passphrase: "{{ env_var('SNOWFLAKE_PRIVATE_KEY_PASSPHRASE', '') }}"
+      database: "{{ env_var('SNOWFLAKE_DATABASE') }}"
+      schema: "dbt_pr_{{ env_var('PR_NUMBER', 'ci') }}"
+      warehouse: "{{ env_var('SNOWFLAKE_WAREHOUSE') }}"
+      role: "{{ env_var('SNOWFLAKE_ROLE', '') }}"
+      threads: 4
+      query_tag: dbt_ci
+
+    prod:
+      type: snowflake
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
+      user: "{{ env_var('SNOWFLAKE_USER') }}"
+      private_key_path: "{{ env_var('SNOWFLAKE_PRIVATE_KEY_PATH') }}"
+      private_key_passphrase: "{{ env_var('SNOWFLAKE_PRIVATE_KEY_PASSPHRASE', '') }}"
+      database: "{{ env_var('SNOWFLAKE_DATABASE') }}"
+      schema: "{{ env_var('SNOWFLAKE_SCHEMA', 'dbt_prod') }}"
+      warehouse: "{{ env_var('SNOWFLAKE_WAREHOUSE') }}"
+      role: "{{ env_var('SNOWFLAKE_ROLE', '') }}"
+      threads: 8
+      query_tag: dbt_prod

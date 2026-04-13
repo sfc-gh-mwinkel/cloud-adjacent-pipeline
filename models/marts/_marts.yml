@@ -1,0 +1,41 @@
+version: 2
+
+models:
+  - name: fct_user_revenue
+    description: One row per user with aggregated revenue and refund metrics. Incremental on last_event_at.
+    meta:
+      legacy_name: fct_user_revenue
+    columns:
+      - name: user_id
+        description: User identifier (natural key)
+        tests:
+          - unique
+          - not_null
+      - name: purchase_count
+        description: Total number of completed purchase events for the user
+        tests:
+          - not_null
+      - name: refund_count
+        description: Total number of refund events for the user
+        tests:
+          - not_null
+      - name: gross_revenue
+        description: Sum of all purchase amounts before refunds
+        tests:
+          - not_null
+      - name: total_refunds
+        description: Sum of all refund amounts
+        tests:
+          - not_null
+      - name: net_revenue
+        description: gross_revenue minus total_refunds
+        tests:
+          - not_null
+      - name: last_event_at
+        description: Timestamp of the most recent event for this user
+        tests:
+          - not_null
+      - name: dbt_updated_at
+        description: Timestamp when this row was last written by dbt
+        tests:
+          - not_null
