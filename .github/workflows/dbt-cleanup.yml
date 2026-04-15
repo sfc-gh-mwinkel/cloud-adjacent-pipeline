@@ -17,6 +17,7 @@ jobs:
       SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
       SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
       SNOWFLAKE_DATABASE: ${{ secrets.SNOWFLAKE_DATABASE }}
+      SNOWFLAKE_CI_DATABASE: ${{ secrets.SNOWFLAKE_CI_DATABASE }}
       SNOWFLAKE_ROLE: ${{ secrets.SNOWFLAKE_ROLE }}
       SNOWFLAKE_PRIVATE_KEY_PASSPHRASE: ${{ secrets.SNOWFLAKE_PRIVATE_KEY_PASSPHRASE }}
       SNOWFLAKE_PRIVATE_KEY_PATH: /tmp/snowflake_key.p8
@@ -43,7 +44,7 @@ jobs:
           import os
 
           pr = os.environ["PR_NUMBER"]
-          database = os.environ["SNOWFLAKE_DATABASE"]
+          database = os.environ.get("SNOWFLAKE_CI_DATABASE") or os.environ["SNOWFLAKE_DATABASE"]
           schema = f"dbt_pr_{pr}"
 
           conn = snowflake.connector.connect(
