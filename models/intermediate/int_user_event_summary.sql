@@ -4,7 +4,7 @@ with events as (
 
 summarized as (
     select
-        user_id,
+        try_to_number(user_id) as user_id,
         count_if(event_type = 'purchase')                           as purchase_count,
         count_if(event_type = 'refund')                             as refund_count,
         sum(case when event_type = 'purchase' then amount else 0 end) as gross_revenue,
