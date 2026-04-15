@@ -60,6 +60,9 @@ jobs:
       - name: dbt deps
         run: dbt deps --profiles-dir ./profiles
 
+      - name: dbt seed
+        run: dbt seed --target check --profiles-dir ./profiles
+
       - name: dbt build (slim CI)
         run: |
           if [ -f ./prod-manifest/manifest.json ]; then
