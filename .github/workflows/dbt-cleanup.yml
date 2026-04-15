@@ -45,7 +45,7 @@ jobs:
 
           pr = os.environ["PR_NUMBER"]
           database = os.environ.get("SNOWFLAKE_CI_DATABASE") or os.environ["SNOWFLAKE_DATABASE"]
-          schema = f"dbt_pr_{pr}"
+          suffix = f"_dbt_pr_{pr}"
 
           conn = snowflake.connector.connect(
               account=os.environ["SNOWFLAKE_ACCOUNT"],
@@ -56,8 +56,16 @@ jobs:
           )
 
           cur = conn.cursor()
-          fqn = f"{database}.{schema}"
-          cur.execute(f"DROP SCHEMA IF EXISTS {fqn}")
-          print(f"Dropped schema: {fqn}")
+          cur.execute(f"SHOW SCHEMAS LIKE '%{suffix}' IN DATABASE {database}")
+          schemas = [row[1] for row in cur.fetchall()]
+
+          for schema in schemas:
+              fqn = f"{database}.{schema}"
+              cur.execute(f"DROP SCHEMA IF EXISTS {fqn}")
+              print(f"Dropped schema: {fqn}")
+
+          if not schemas:
+              print(f"No schemas matching %{suffix} found in {database}")
+
           conn.close()
           EOF

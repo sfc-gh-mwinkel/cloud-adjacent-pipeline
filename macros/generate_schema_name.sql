@@ -7,10 +7,14 @@
     
     BEHAVIOR:
     - uat/prod targets: Use the custom database/schema from model config
-    - All other targets: Use target.database and target.schema (ignores config)
+    - All other targets (dev/CI):
+        - If the model has a custom schema configured, build into
+          <custom_schema>_<target.schema>  (e.g. marts_dbt_pr_42)
+        - If no custom schema is configured, build into target.schema as-is
+          (e.g. dbt_pr_42)
     
     This ensures:
-    - Dev/CI builds go to isolated locations (target.database.target.schema)
+    - Dev/CI builds are isolated to target.database and namespaced per layer
     - UAT/Prod builds respect the configured database/schema structure
     
     ============================================================================
@@ -48,8 +52,12 @@
             {{ target.schema }}
         {%- endif -%}
     {%- else -%}
-        {# Dev/CI/Other: Always use target.schema #}
-        {{ target.schema }}
+        {# Dev/CI/Other: Append target.schema suffix to the custom schema name #}
+        {%- if custom_schema_name is not none -%}
+            {{ custom_schema_name | trim }}_{{ target.schema }}
+        {%- else -%}
+            {{ target.schema }}
+        {%- endif -%}
     {%- endif -%}
 
 {%- endmacro %}

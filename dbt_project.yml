@@ -31,14 +31,17 @@ models:
 
     staging:
       +materialized: view
+      +schema: staging
       +tags: ["staging"]
       +query_tag: 'dbt_staging'
 
     intermediate:
       +materialized: ephemeral
+      +schema: intermediate
       +tags: ["intermediate"]
 
     marts:
       +materialized: table
+      +schema: marts
       +tags: ["marts"]
       +query_tag: 'dbt_marts'

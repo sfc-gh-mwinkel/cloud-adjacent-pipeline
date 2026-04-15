@@ -12,7 +12,16 @@ This document covers everything needed to get the GitHub Actions CI pipeline run
 | PR opened / updated | `dbt-ci.yml` | Downloads prod manifest, seeds CI schema, runs `dbt build --select state:modified+ --defer` in an isolated per-PR schema |
 | PR closed (merged or abandoned) | `dbt-cleanup.yml` | Drops the ephemeral CI schema (`dbt_pr_<N>`) from Snowflake |
 
-The CI job schema is isolated per PR: `dbt_pr_<PR_NUMBER>` (e.g. `dbt_pr_42`). The `clone_incrementals_for_ci()` on-run-start hook fires automatically because the target name is `check`, cloning incremental tables from prod so CI runs true incremental builds rather than full refreshes.
+The CI job schemas are isolated per PR, namespaced by model layer:
+
+| Layer | CI schema (PR #42) |
+|---|---|
+| staging | `staging_dbt_pr_42` |
+| intermediate | *(ephemeral — no physical schema)* |
+| marts | `marts_dbt_pr_42` |
+| *(no custom schema)* | `dbt_pr_42` |
+
+The `clone_incrementals_for_ci()` on-run-start hook fires automatically because the target name is `check`, cloning incremental tables from prod so CI runs true incremental builds rather than full refreshes.
 
 ---
 
@@ -130,7 +139,7 @@ PR pushed
   │            --state ./prod-manifest     ← comparison state
   │            --target check              ← triggers clone_incrementals_for_ci()
   │
-  └── Schema: dbt_pr_<PR_NUMBER>           ← fully isolated, dropped on PR close
+  └── Schema: <layer>_dbt_pr_<PR_NUMBER>    ← isolated per layer, dropped on PR close
 ```
 
 The `clone_incrementals_for_ci()` on-run-start hook fires automatically when `target.name == check` and clones any incremental tables from their production source into the CI schema before `dbt build` runs — enabling true incremental builds (not full refreshes) in CI.
@@ -161,7 +170,7 @@ Expected — run the prod workflow once by merging to `main`.
 The RSA public key in Snowflake doesn't match the private key secret. Re-run Step 2 ensuring you pasted the correct public key.
 
 **Schema not dropped after PR close**
-Check the `dbt-cleanup.yml` run in Actions. The CI user needs `DROP SCHEMA` privilege on the CI database (`SNOWFLAKE_CI_DATABASE` if set, otherwise `SNOWFLAKE_DATABASE`).
+Check the `dbt-cleanup.yml` run in Actions. The cleanup drops all schemas matching `%_dbt_pr_<N>` in the CI database. The CI user needs `DROP SCHEMA` privilege on the CI database (`SNOWFLAKE_CI_DATABASE` if set, otherwise `SNOWFLAKE_DATABASE`).
 
 **CI builds landing in the wrong database**
 Verify that `SNOWFLAKE_CI_DATABASE` is set correctly in repository secrets. If the secret is blank or missing, builds fall back to `SNOWFLAKE_DATABASE`.

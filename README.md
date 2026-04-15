@@ -43,9 +43,9 @@ dbt Cloud's CI check jobs give you slim CI out of the box: only run models that 
 ┌─────────────────────────────────────────────────────────────────┐
 │  Snowflake                                                      │
 │                                                                 │
-│  ANALYTICS.DBT_PROD        ← production models                  │
-│  ANALYTICS.DBT_PR_3        ← PR #3 CI build (ephemeral)         │
-│  ANALYTICS.DBT_PR_4        ← PR #4 CI build (ephemeral)         │
+│  ANALYTICS.DBT_PROD           ← production (prod target)        │
+│  ANALYTICS.STAGING_DBT_PR_3   ← PR #3 staging CI schema         │
+│  ANALYTICS.MARTS_DBT_PR_3     ← PR #3 marts CI schema           │
 │                                                                 │
 │  ANALYTICS.OPS             ← infrastructure objects            │
 │    refresh_ci_network_policy()   Snowpark procedure             │
@@ -87,7 +87,7 @@ fct_user_revenue         ← downstream (+)
 
 ## Key Design Decisions
 
-**`generate_schema_name` macro** — For any non-prod target, all models build into `target.schema` regardless of model-level `schema:` config. This prevents CI builds from accidentally scattering across multiple schemas.
+**`generate_schema_name` macro** — For any non-prod target, models build into `<custom_schema>_<target.schema>` (e.g. `marts_dbt_pr_42`). Models without a custom schema fall back to `target.schema` alone. This keeps CI schemas namespaced by layer while remaining fully isolated per PR.
 
 **`clone_incrementals_for_ci()` on-run-start hook** — Clones incremental tables from their production source before `dbt build` runs. This allows CI to test true incremental logic (not a full refresh) against a realistic data state.
 
