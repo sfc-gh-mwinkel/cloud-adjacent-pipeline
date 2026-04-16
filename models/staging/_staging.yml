@@ -3,7 +3,7 @@ version: 2
 sources:
   - name: cloud_adjacent_pipeline
     description: Raw seed data loaded via dbt seeds
-    schema: "{{ target.schema }}"
+    schema: "{% if target.name in ['prod', 'production', 'uat'] %}seeds{% else %}seeds_{{ target.schema }}{% endif %}"
     tables:
       - name: raw_events
         description: Raw event records (purchases, refunds) used as the source for all downstream models

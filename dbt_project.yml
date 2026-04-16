@@ -25,6 +25,10 @@ vars:
   ci_timestamp_column: 'updated_at'
   ci_clone_enabled: true
 
+seeds:
+  cloud_adjacent_pipeline:
+    +schema: seeds
+
 models:
   cloud_adjacent_pipeline:
     +query_tag: 'dbt'
