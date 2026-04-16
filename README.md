@@ -95,8 +95,6 @@ fct_user_revenue         ← downstream (+)
 
 **`SNOWFLAKE_CI_DATABASE` secret (optional)** — When set, all CI builds (and schema cleanup) target this database instead of `SNOWFLAKE_DATABASE`. Useful for fully isolating CI activity from the production database.
 
-**Network policy** — `ci_user` is restricted to GitHub Actions IP ranges via `ci_open_policy`. The allowed list is refreshed weekly by a Snowflake Task (`ANALYTICS.OPS.refresh_ci_network_policy_task`) that calls `https://api.github.com/meta` through an external access integration — no GitHub credentials required.
-
 ---
 
 ## Repository Layout
