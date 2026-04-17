@@ -5,6 +5,7 @@ with events as (
 summarized as (
     select
         user_id,
+        event_type,
         count_if(event_type = 'purchase')                           as purchase_count,
         count_if(event_type = 'refund')                             as refund_count,
         sum(case when event_type = 'purchase' then amount else 0 end) as gross_revenue,
@@ -13,7 +14,7 @@ summarized as (
             - sum(case when event_type = 'refund' then amount else 0 end) as net_revenue,
         max(updated_at)                                             as last_event_at
     from events
-    group by 1
+    group by 1, 2
 )
 
 select * from summarized
