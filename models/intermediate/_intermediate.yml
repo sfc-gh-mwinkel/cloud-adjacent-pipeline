@@ -29,6 +29,10 @@ models:
         description: Gross revenue minus total refunds for the user
         tests:
           - not_null
+      - name: total_event_count
+        description: Total number of events (purchases + refunds) for the user
+        tests:
+          - not_null
       - name: last_event_at
         description: Timestamp of the most recent event for the user
         tests:

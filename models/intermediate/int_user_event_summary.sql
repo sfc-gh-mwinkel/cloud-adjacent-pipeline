@@ -11,6 +11,7 @@ summarized as (
         sum(case when event_type = 'refund' then amount else 0 end)   as total_refunds,
         sum(case when event_type = 'purchase' then amount else 0 end)
             - sum(case when event_type = 'refund' then amount else 0 end) as net_revenue,
+        count(*)                                                    as total_event_count,
         max(updated_at)                                             as last_event_at
     from events
     group by 1
