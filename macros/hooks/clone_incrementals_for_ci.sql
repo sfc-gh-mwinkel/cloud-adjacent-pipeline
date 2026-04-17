@@ -141,9 +141,13 @@
                     {# Build source description #}
                     {% set legacy_source = 'db:' ~ db_source ~ ' schema:' ~ schema_source ~ ' table:' ~ table_source %}
                     
-                    {# CI location from target #}
+                    {# CI location: mirror generate_schema_name non-prod logic #}
                     {% set ci_database = target.database | upper %}
-                    {% set ci_schema = target.schema | upper %}
+                    {% if node.config.schema is not none %}
+                        {% set ci_schema = (node.config.schema ~ '_' ~ target.schema) | upper %}
+                    {% else %}
+                        {% set ci_schema = target.schema | upper %}
+                    {% endif %}
                     {% set ci_table = (node.alias or model_name) | upper %}
                     
                     {% do models_to_clone.append({
