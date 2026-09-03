@@ -18,6 +18,7 @@ final as (
         gross_revenue,
         total_refunds,
         gross_revenue - total_refunds  as net_revenue,
+        purchase_count + refund_count as total_event_count,
         last_event_at,
         current_timestamp()            as dbt_updated_at
     from user_summary
