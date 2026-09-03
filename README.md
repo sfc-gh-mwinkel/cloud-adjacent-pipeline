@@ -89,7 +89,9 @@ fct_user_revenue         ← downstream (+)
 
 **`generate_schema_name` macro** — For any non-prod target, models build into `<custom_schema>_<target.schema>` (e.g. `marts_dbt_pr_42`). Models without a custom schema fall back to `target.schema` alone. This keeps CI schemas namespaced by layer while remaining fully isolated per PR.
 
-**`clone_incrementals_for_ci()` on-run-start hook** — Clones incremental tables from their production source before `dbt build` runs. This allows CI to test true incremental logic (not a full refresh) against a realistic data state.
+**Native incremental cloning + trim hook** — CI runs `dbt clone --full-refresh` against the production manifest for selected incremental models, replacing any prior PR clone. The `clone_incrementals_for_ci()` on-run-start hook then removes a recent, model-specific window relative to the cloned table's maximum watermark so `dbt build` exercises `is_incremental()` and writes rows. Configure each incremental model with `meta.ci_trim_timestamp_column`; `meta.ci_trim_days` can override the project default.
+
+**Schema drift reporting** — CI uses `sync_all_columns` against the cloned relation. If dbt detects added, removed, or type-changed columns, the check remains non-failing but publishes a GitHub Actions warning, a job-summary table, and an updated PR comment. Treat the warning as a prompt to decide whether production needs a full refresh: schema synchronization does not backfill historical rows. The reporting override mirrors dbt-adapters 1.16.3 and must be reviewed when dbt is upgraded.
 
 **Separate `dbt seed` step** — Seeds run as a dedicated step before `dbt build` to avoid a race condition where source freshness tests fire before the seed data exists.
 
@@ -115,7 +117,7 @@ models/
 macros/
   generate_schema_name.sql      Isolates dev/CI builds to target.schema
   hooks/
-    clone_incrementals_for_ci.sql   Clones prod incrementals into CI schema
+    clone_incrementals_for_ci.sql   Trims recent rows from cloned incrementals
 
 profiles/
   profiles.yml        check + prod targets (all creds from env vars)

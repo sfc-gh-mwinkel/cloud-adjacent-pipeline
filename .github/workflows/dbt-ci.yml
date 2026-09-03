@@ -21,6 +21,7 @@ jobs:
     permissions:
       actions: read
       contents: read
+      pull-requests: write
 
     env:
       SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
@@ -32,6 +33,7 @@ jobs:
       SNOWFLAKE_PRIVATE_KEY_PASSPHRASE: ${{ secrets.SNOWFLAKE_PRIVATE_KEY_PASSPHRASE }}
       SNOWFLAKE_PRIVATE_KEY_PATH: /tmp/snowflake_key.p8
       PR_NUMBER: ${{ github.event.pull_request.number }}
+      DBT_LOG_PATH: logs
 
     steps:
       - name: Checkout
@@ -67,7 +69,18 @@ jobs:
       - name: dbt seed
         run: dbt seed --target check --profiles-dir ./profiles
 
+      - name: Clone modified incremental models
+        if: ${{ hashFiles('prod-manifest/manifest.json') != '' }}
+        run: |
+          dbt clone \
+            --select "state:modified+,config.materialized:incremental" \
+            --state ./prod-manifest \
+            --full-refresh \
+            --target check \
+            --profiles-dir ./profiles
+
       - name: dbt build (slim CI)
+        id: dbt-build
         run: |
           if [ -f ./prod-manifest/manifest.json ]; then
             echo "Production manifest found — running slim CI (state:modified+)"
@@ -83,3 +96,17 @@ jobs:
               --target check \
               --profiles-dir ./profiles
           fi
+
+      - name: Render schema drift report
+        id: schema-drift
+        if: ${{ always() }}
+        env:
+          DBT_BUILD_OUTCOME: ${{ steps.dbt-build.outcome }}
+        run: python .github/scripts/render_schema_drift.py
+
+      - name: Update schema drift PR comment
+        if: ${{ always() && github.event.pull_request.head.repo.full_name == github.repository }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: python .github/scripts/update_schema_drift_comment.py

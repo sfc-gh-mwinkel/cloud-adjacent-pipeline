@@ -21,7 +21,21 @@ The CI job schemas are isolated per PR, namespaced by model layer:
 | marts | `marts_dbt_pr_42` |
 | *(no custom schema)* | `dbt_pr_42` |
 
-The `clone_incrementals_for_ci()` on-run-start hook fires automatically because the target name is `check`, cloning incremental tables from prod so CI runs true incremental builds rather than full refreshes.
+When a production manifest is available, CI first runs `dbt clone --full-refresh` for selected incremental models so reruns replace any prior PR clone. The `clone_incrementals_for_ci()` on-run-start hook then removes each model's configured window relative to the clone's maximum watermark so the build runs true incremental logic and rewrites rows.
+
+Configure the trim watermark in the model properties:
+
+```yaml
+models:
+  - name: fct_user_revenue
+    meta:
+      ci_trim_timestamp_column: last_event_at
+      ci_trim_days: 1  # optional; defaults to vars.ci_trim_days
+```
+
+CI forces `on_schema_change: sync_all_columns` for the sample incremental model. Added, removed, and type-changed columns are synchronized on the clone and surfaced as a non-failing GitHub Actions warning, job summary, and same-repository PR comment. A warning means the production deployment should be reviewed for a full refresh because existing rows are not backfilled by schema synchronization. Fork PRs do not receive comments because their `GITHUB_TOKEN` is read-only, but their Actions annotation and summary still render.
+
+The schema-drift reporting macro mirrors dbt-adapters 1.16.3. Review it whenever the pinned dbt dependencies change.
 
 ---
 
@@ -219,15 +233,21 @@ PR pushed
   │     └── loads seed data into the CI schema first (avoids race condition
   │         where source tests run before seeds are present)
   │
+  ├── dbt clone --select "state:modified+,config.materialized:incremental"
+  │            --state ./prod-manifest
+  │            --full-refresh
+  │            --target check
+  │     └── zero-copy clones selected production incrementals into CI
+  │
   ├── dbt build --select state:modified+   ← only changed models + downstream
   │            --defer                     ← use prod for unselected node refs
   │            --state ./prod-manifest     ← comparison state
-  │            --target check              ← triggers clone_incrementals_for_ci()
+  │            --target check              ← trims clones, then runs incrementally
   │
   └── Schema: <layer>_dbt_pr_<PR_NUMBER>    ← isolated per layer, dropped on PR close
 ```
 
-The `clone_incrementals_for_ci()` on-run-start hook fires automatically when `target.name == check` and clones any incremental tables from their production source into the CI schema before `dbt build` runs — enabling true incremental builds (not full refreshes) in CI.
+The `clone_incrementals_for_ci()` on-run-start hook fires when `target.name == check` and removes the configured recent window from each clone before the selected models run.
 
 ---
 
