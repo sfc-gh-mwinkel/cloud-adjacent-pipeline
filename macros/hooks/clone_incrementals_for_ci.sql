@@ -64,12 +64,13 @@
                             node.name ~ ': configured CI trim column ' ~ timestamp_column ~ ' is not present in ' ~ relation
                         ) %}
                     {% else %}
+                        {% set actual_timestamp_column = relation_columns[column_names.index(timestamp_column | lower)].name %}
                         {% set trim_sql %}
                             delete from {{ relation }}
-                            where {{ adapter.quote(timestamp_column) }} >= dateadd(
+                            where {{ adapter.quote(actual_timestamp_column) }} >= dateadd(
                                 day,
                                 -{{ trim_days | int }},
-                                (select max({{ adapter.quote(timestamp_column) }}) from {{ relation }})
+                                (select max({{ adapter.quote(actual_timestamp_column) }}) from {{ relation }})
                             )
                         {% endset %}
                         {% do run_query(trim_sql) %}
