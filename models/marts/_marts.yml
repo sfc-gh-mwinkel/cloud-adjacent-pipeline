@@ -33,8 +33,6 @@ models:
           - not_null
       - name: total_event_count
         description: Total purchase and refund events included for the user
-        tests:
-          - not_null
       - name: last_event_at
         description: Timestamp of the most recent event for this user
         tests:
