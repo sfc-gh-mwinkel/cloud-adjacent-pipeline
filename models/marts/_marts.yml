@@ -33,6 +33,8 @@ models:
           - not_null
       - name: total_event_count
         description: Total purchase and refund events included for the user
+      - name: has_zero_gross_revenue
+        description: Whether the user has no completed purchase revenue
       - name: last_event_at
         description: Timestamp of the most recent event for this user
         tests:
