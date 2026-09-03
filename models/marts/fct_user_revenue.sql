@@ -2,7 +2,7 @@
     config(
         materialized='incremental',
         unique_key='user_id',
-        on_schema_change='sync_all_columns'
+        on_schema_change=(var('ci_on_schema_change', 'sync_all_columns') if target.name == 'check' else 'sync_all_columns')
     )
 }}
 
@@ -26,5 +26,7 @@ final as (
 select * from final
 
 {% if is_incremental() %}
-    where last_event_at > (select max(last_event_at) from {{ this }})
+    where
+        (select max(last_event_at) from {{ this }}) is null
+        or last_event_at > (select max(last_event_at) from {{ this }})
 {% endif %}

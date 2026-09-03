@@ -4,3 +4,7 @@ logs/
 .env
 *.p8
 *.pem
+dbt_internal_packages/
+__pycache__/
+*.pyc
+schema-drift-report.md

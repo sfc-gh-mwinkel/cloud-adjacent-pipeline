@@ -4,7 +4,7 @@ models:
   - name: fct_user_revenue
     description: One row per user with aggregated revenue and refund metrics. Incremental on last_event_at.
     meta:
-      legacy_name: fct_user_revenue
+      ci_trim_timestamp_column: last_event_at
     columns:
       - name: user_id
         description: User identifier (natural key)

@@ -21,9 +21,10 @@ on-run-start:
 
 vars:
   ci_target_names: ['ci', 'pr', 'slim_ci', 'check']
-  ci_truncate_days: 1
-  ci_timestamp_column: 'updated_at'
+  ci_trim_days: 1
+  ci_timestamp_column: null
   ci_clone_enabled: true
+  ci_on_schema_change: sync_all_columns
 
 seeds:
   cloud_adjacent_pipeline:

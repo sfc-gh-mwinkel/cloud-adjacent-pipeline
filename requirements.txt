@@ -1,2 +1,3 @@
 dbt-core==1.9.4
 dbt-snowflake==1.9.2
+dbt-adapters==1.16.3
